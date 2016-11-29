@@ -5,9 +5,18 @@ namespace pamel\api\core;
 
 use pamel\api\core\processors\Processor;
 use pamel\api\core\providers\Broker;
+use pamel\core\PamelContext;
+use pamel\core\Source;
 
 interface PamelRouter
 {
+    /**
+     * PamelRouter constructor.
+     * @param PamelContext $context
+     * @param Source $source
+     */
+    public function __construct(PamelContext $context, Source $source);
+
     /**
      * Configures a route
      * @return void
@@ -16,17 +25,16 @@ interface PamelRouter
 
     /**
      * Listens to broker
-     * @param Broker $broker
      * @return $this
      */
-    public function from(Broker $broker);
+    public function from();
 
     /**
      * Sends to broker
-     * @param Broker $broker
+     * @param Source $source
      * @return $this
      */
-    public function to(Broker $broker);
+    public function to(Source $source);
 
     /**
      * Processes a Processor

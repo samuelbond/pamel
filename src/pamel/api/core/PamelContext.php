@@ -14,5 +14,5 @@ interface PamelContext
 
     public function setMessageBrokerConnector(MessageBrokerConnector $brokerConnector);
 
-    public function getMessageBrokerConnector();
+    public function getMessageBrokerConnector() : MessageBrokerConnector;
 }

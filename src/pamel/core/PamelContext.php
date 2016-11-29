@@ -26,7 +26,7 @@ class PamelContext implements \pamel\api\core\PamelContext
         $this->messageBrokerConnector = $brokerConnector;
     }
 
-    public function getMessageBrokerConnector()
+    public function getMessageBrokerConnector(): MessageBrokerConnector
     {
         return $this->messageBrokerConnector;
     }

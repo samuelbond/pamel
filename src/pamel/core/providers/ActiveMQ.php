@@ -9,33 +9,88 @@
 namespace pamel\core\providers;
 
 
-use pamel\api\core\providers\Broker;
+use pamel\api\core\PamelRouter;
+use pamel\api\core\processors\Processor;
 use pamel\core\messages\Exchange;
 use pamel\core\messages\Message;
+use pamel\core\PamelContext;
+use pamel\core\Source;
+use pamel\core\util\SourceUtil;
+use pamel\exception\InvalidOrEmptySourceException;
+use Stomp\SimpleStomp;
 
-class ActiveMQ extends Broker
+class ActiveMQ implements PamelRouter
 {
-    public function retrieve() :Exchange
-    {   /** @var \Stomp\Transport\Message $msg */
-        $msg = $this->brokerResource->read();
-        $exchange = new Exchange();
+    /**
+     * @var PamelContext
+     */
+    private $pamelContext;
+    /**
+     * @var Exchange
+     */
+    private $exchange;
+    /**
+     * @var Source
+     */
+    private $source;
+    /**
+     * @var SimpleStomp
+     */
+    private $resource;
+
+    /**
+     * ActiveMQ constructor.
+     * @param PamelContext $context
+     * @param Source $source
+     */
+    public function __construct(PamelContext $context, Source $source)
+    {
+        $this->pamelContext = $context;
+        $this->source = $source;
+        if(SourceUtil::isEmpty($source)){
+            throw new InvalidOrEmptySourceException();
+        }
+        $this->pamelContext->getMessageBrokerConnector()->connect();
+        $this->resource = $this->pamelContext->getMessageBrokerConnector()->subscribe($this->source->getEndpoint());
+    }
+
+    public function configure()
+    {
+        // TODO: Implement configure() method.
+    }
+
+    public function from()
+    {
+        /** @var \Stomp\Transport\Message $msg */
+        $msg = $this->resource->read();
+        $this->exchange = new Exchange();
         $message = new Message();
         $message->setMessageBody($msg->body);
         $message->setMessageHeader($msg->getHeaders());
-        $exchange->setMessage($message);
-        $exchange->setOriginalMessage($msg);
-        return $exchange;
+        $this->exchange->setMessage($message);
+        $this->exchange->setOriginalMessage($msg);
+        return $this;
     }
 
-    public function send(Exchange $exchange) : Exchange
+    public function to(Source $source = null)
     {
-        $this->brokerResource->send($this->endpoint, $exchange->getOut());
-        return $exchange;
+        if(SourceUtil::isNotEmpty($source)){
+            $this->resource->send($source->getEndpoint(), $this->exchange->getOut());
+        }
+        return $this;
     }
 
-    public function acknowledge(Exchange $exchange)
+    public function process(Processor $processor)
     {
-        $this->brokerResource->ack($exchange->getOriginalMessage());
+        if($processor != null){
+            $processor->process($this->exchange);
+        }
+        return $this;
+    }
+
+    public function log($item)
+    {
+        // TODO: Implement log() method.
     }
 
 }

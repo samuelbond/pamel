@@ -17,7 +17,7 @@ use pamel\core\providers\config\Broker;
 class ThreadSafeRoute extends \Thread
 {
     public function run(){
-        $host = new BrokerHost("tcp://fgbw1apviz4102.da-local.bbc.co.uk");
+        $host = new BrokerHost("");
         $readFrom = new ReadFrom("/queue/sample");
         $processor = new class implements Processor{
             public function process(Exchange $exchange)
